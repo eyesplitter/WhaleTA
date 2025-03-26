@@ -1,0 +1,30 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "dist/app.js",
+  "scripts": {
+    "start:dev": "npx tsc && NODE_ENV=development node build/app.js",
+    "start:production": "NODE_ENV=production node build/app.js",
+    "build": "npx tsc",
+    "lint": "npx eslint src",
+    "test": "jest --coverage",
+    "prettier": "prettier --check ./src/",
+    "prettier:fix": "prettier --write ./src/"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.13.13",
+    "@types/pg": "^8.11.11",
+    "@types/redis": "^4.0.10",
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "pg": "^8.14.1",
+    "redis": "^4.7.0"
+  }
+}
