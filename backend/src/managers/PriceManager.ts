@@ -10,7 +10,7 @@ export class PriceManager {
   private readonly PAIRS_TO_CURRENCY_IDS: Record<string, string[]> = {
     "ton-usdt": ["the-open-network", "tether"],
   }
-  private readonly MAX_PRICE_AGE_MINUTES = 1
+  private readonly MAX_PRICE_AGE_MINUTES = 30
 
   constructor(
     priceRepository: PriceRepository,
