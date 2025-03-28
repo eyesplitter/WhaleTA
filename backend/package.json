@@ -9,7 +9,10 @@
     "lint": "npx eslint src",
     "test": "jest --coverage",
     "prettier": "prettier --check ./src/",
-    "prettier:fix": "prettier --write ./src/"
+    "prettier:fix": "prettier --write ./src/",
+    "migrate:create": "node-pg-migrate create",
+    "migrate:up": "node-pg-migrate up",
+    "migrate:down": "node-pg-migrate down"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +29,7 @@
   "dependencies": {
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "node-pg-migrate": "^7.9.1",
     "pg": "^8.14.1",
     "redis": "^4.7.0"
   }
