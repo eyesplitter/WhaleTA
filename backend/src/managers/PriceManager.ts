@@ -25,7 +25,6 @@ export class PriceManager {
   private isPriceStale(lastUpdate: Date): boolean {
     const now = new Date()
     const diffMinutes = (now.getTime() - lastUpdate.getTime()) / (1000 * 60)
-    console.log("diffMinutes", diffMinutes, "lastUpdate", lastUpdate.toISOString(), "now", now.toISOString())
     return diffMinutes > this.MAX_PRICE_AGE_MINUTES
   }
 
@@ -63,7 +62,6 @@ export class PriceManager {
 
     const redisPrice = await this.redisRepository.getPrice(pair)
     if (redisPrice && !this.isPriceStale(redisPrice.timestamp)) {
-      console.log("Using Redis cached price from", redisPrice.timestamp.toISOString())
       return {
         price: redisPrice.price,
         reversePrice: 1 / redisPrice.price,
@@ -72,7 +70,6 @@ export class PriceManager {
 
     const dbPrice = await this.priceRepository.getLastPrice(pair)
     if (dbPrice && !this.isPriceStale(dbPrice.timestamp)) {
-      console.log("Using DB cached price from", dbPrice.timestamp.toISOString())
       await this.redisRepository.setPrice(pair, dbPrice)
       return {
         price: dbPrice.price,
@@ -80,7 +77,6 @@ export class PriceManager {
       }
     }
 
-    console.log("Fetching new price")
     const price = await this.fetchPrice(currencies)
     const fromPrice = price.price[currencies[0]].usd
     const toPrice = price.price[currencies[1]].usd

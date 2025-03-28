@@ -21,7 +21,6 @@ export class PriceController {
 
     try {
       const prices = await this.priceManager.getHistoricPrices(pair, from, to)
-      console.log("prices", prices)
       res.json(prices)
     } catch (error) {
       res.status(500).json({ error: error.message })

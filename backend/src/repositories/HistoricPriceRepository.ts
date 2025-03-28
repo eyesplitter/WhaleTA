@@ -37,7 +37,6 @@ export class HistoricPriceRepository {
         ORDER BY timestamp DESC`,
         [pair, from, to],
       )
-      console.log("result", result.rows, from, to)
       return result.rows
     } catch (error) {
       console.error("error getHistoricPrices", error.message)
