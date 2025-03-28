@@ -6,6 +6,7 @@ import { RedisRepository } from "./repositories/RedisRepository"
 import { HistoricPriceRepository } from "./repositories/HistoricPriceRepository"
 import { PriceManager } from "./managers/PriceManager"
 import { PriceController } from "./controllers/PriceController"
+import cors from "cors"
 dotenv.config()
 
 const config: Record<string, string | number> = {
@@ -21,6 +22,7 @@ const config: Record<string, string | number> = {
 }
 
 const app = express()
+app.use(cors())
 app.use(express.json())
 
 const pool = new Pool({
