@@ -1,17 +1,17 @@
-import { Pool } from "pg";
-import { Provider } from "../types";
+import { Pool } from "pg"
+import { Provider } from "../types"
 
 export interface PriceData {
-  price: number;
-  timestamp: Date;
-  provider_id: number;
+  price: number
+  timestamp: Date
+  provider_id: number
 }
 
 export class PriceRepository {
-  private pool: Pool;
+  private pool: Pool
 
   constructor(pool: Pool) {
-    this.pool = pool;
+    this.pool = pool
   }
 
   async savePrice(pair: string, price: number, providerId: number): Promise<void> {
@@ -19,10 +19,10 @@ export class PriceRepository {
       await this.pool.query(
         "INSERT INTO crypto_prices (pair, price, timestamp, provider_id) VALUES ($1, $2, NOW() AT TIME ZONE 'UTC', $3) ON CONFLICT (pair) DO UPDATE SET price = EXCLUDED.price, timestamp = NOW() AT TIME ZONE 'UTC'",
         [pair, price, providerId],
-      );
+      )
     } catch (error) {
-      console.error("error savePrice", error.message);
-      throw error;
+      console.error("error savePrice", error.message)
+      throw error
     }
   }
 
@@ -30,22 +30,22 @@ export class PriceRepository {
     try {
       const result = await this.pool.query(
         "SELECT price, timestamp AT TIME ZONE 'UTC' as timestamp, provider_id FROM crypto_prices WHERE pair = $1",
-        [pair]
-      );
-      return result.rows[0] || null;
+        [pair],
+      )
+      return result.rows[0] || null
     } catch (error) {
-      console.error("error getLastPrice", error.message);
-      throw error;
+      console.error("error getLastPrice", error.message)
+      throw error
     }
   }
 
   async getProviders(): Promise<Provider[]> {
     try {
-      const result = await this.pool.query("SELECT * FROM providers");
-      return result.rows;
+      const result = await this.pool.query("SELECT * FROM providers")
+      return result.rows
     } catch (error) {
-      console.error("error getProviders", error.message);
-      throw error;
+      console.error("error getProviders", error.message)
+      throw error
     }
   }
-} 
+}

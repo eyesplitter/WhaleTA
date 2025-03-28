@@ -1,36 +1,36 @@
-import { createClient } from 'redis';
-import { PriceData } from './PriceRepository';
+import { createClient } from "redis"
+import { PriceData } from "./PriceRepository"
 
 export class RedisRepository {
-  private client;
+  private client
 
   constructor(redisUrl: string) {
     this.client = createClient({
-      url: redisUrl
-    });
+      url: redisUrl,
+    })
   }
 
   async connect() {
-    await this.client.connect();
+    await this.client.connect()
   }
 
   async disconnect() {
-    await this.client.disconnect();
+    await this.client.disconnect()
   }
 
   async getPrice(pair: string): Promise<PriceData | null> {
     try {
-      const data = await this.client.get(`price:${pair}`);
-      if (!data) return null;
-      
-      const parsed = JSON.parse(data);
+      const data = await this.client.get(`price:${pair}`)
+      if (!data) return null
+
+      const parsed = JSON.parse(data)
       return {
         ...parsed,
-        timestamp: new Date(parsed.timestamp)
-      };
+        timestamp: new Date(parsed.timestamp),
+      }
     } catch (error) {
-      console.error('Redis getPrice error:', error);
-      return null;
+      console.error("Redis getPrice error:", error)
+      return null
     }
   }
 
@@ -40,11 +40,11 @@ export class RedisRepository {
         `price:${pair}`,
         JSON.stringify({
           ...priceData,
-          timestamp: priceData.timestamp.toISOString()
-        })
-      );
+          timestamp: priceData.timestamp.toISOString(),
+        }),
+      )
     } catch (error) {
-      console.error('Redis setPrice error:', error);
+      console.error("Redis setPrice error:", error)
     }
   }
-} 
+}

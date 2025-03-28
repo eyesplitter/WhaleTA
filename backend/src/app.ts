@@ -3,6 +3,7 @@ import dotenv from "dotenv"
 import { Pool } from "pg"
 import { PriceRepository } from "./repositories/PriceRepository"
 import { RedisRepository } from "./repositories/RedisRepository"
+import { HistoricPriceRepository } from "./repositories/HistoricPriceRepository"
 import { PriceManager } from "./managers/PriceManager"
 import { PriceController } from "./controllers/PriceController"
 dotenv.config()
@@ -26,19 +27,19 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 })
 
-const redisUrl = `redis://${config.redisHost}:${config.redisPort}${config.redisPassword ? `?password=${config.redisPassword}` : ''}`
+const redisUrl = `redis://${config.redisHost}:${config.redisPort}${config.redisPassword ? `?password=${config.redisPassword}` : ""}`
 const redisRepository = new RedisRepository(redisUrl)
 const priceRepository = new PriceRepository(pool)
-const priceManager = new PriceManager(priceRepository, redisRepository)
+const historicPriceRepository = new HistoricPriceRepository(pool)
+const priceManager = new PriceManager(priceRepository, redisRepository, historicPriceRepository)
 const priceController = new PriceController(priceManager)
 
 app.get("/price/:pair", (req, res) => priceController.getPrice(req, res))
+app.get("/price/:pair/history", (req, res) => priceController.getHistoricPrices(req, res))
 app.get("/health", (req, res) => priceController.healthCheck(req, res))
-
 ;(async () => {
-  // Подключаемся к Redis
-  await redisRepository.connect();
-  
+  await redisRepository.connect()
+
   await new Promise<void>((resolve, reject) => {
     app
       .listen(config.port, () => {

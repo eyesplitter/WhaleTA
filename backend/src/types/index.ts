@@ -1,14 +1,14 @@
 export interface ProviderResponse {
-  [key: string]: {usd: number}
+  [key: string]: { usd: number }
 }
 
 export interface Price {
-  price: {[key: string]: {usd: number} }
+  price: { [key: string]: { usd: number } }
   providerId: number
 }
 
 export interface Provider {
-  id: number;
-  name: string;
-  base_url: string;
-} 
+  id: number
+  name: string
+  base_url: string
+}
