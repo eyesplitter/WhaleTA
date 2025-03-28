@@ -2,6 +2,7 @@ import express from "express"
 import dotenv from "dotenv"
 import { Pool } from "pg"
 import { PriceRepository } from "./repositories/PriceRepository"
+import { RedisRepository } from "./repositories/RedisRepository"
 import { PriceManager } from "./managers/PriceManager"
 import { PriceController } from "./controllers/PriceController"
 dotenv.config()
@@ -25,14 +26,19 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 })
 
+const redisUrl = `redis://${config.redisHost}:${config.redisPort}${config.redisPassword ? `?password=${config.redisPassword}` : ''}`
+const redisRepository = new RedisRepository(redisUrl)
 const priceRepository = new PriceRepository(pool)
-const priceManager = new PriceManager(priceRepository)
+const priceManager = new PriceManager(priceRepository, redisRepository)
 const priceController = new PriceController(priceManager)
 
 app.get("/price/:pair", (req, res) => priceController.getPrice(req, res))
 app.get("/health", (req, res) => priceController.healthCheck(req, res))
 
 ;(async () => {
+  // Подключаемся к Redis
+  await redisRepository.connect();
+  
   await new Promise<void>((resolve, reject) => {
     app
       .listen(config.port, () => {
@@ -48,7 +54,8 @@ app.get("/health", (req, res) => priceController.healthCheck(req, res))
   .then(() => {
     console.info("Backend ready")
   })
-  .catch((error) => {
+  .catch(async (error) => {
     console.error(`Failed to start: ${error.message}`, { error: error })
+    await redisRepository.disconnect()
     process.exit(1)
   })

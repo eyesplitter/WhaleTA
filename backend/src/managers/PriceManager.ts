@@ -1,15 +1,18 @@
 import { PriceRepository } from "../repositories/PriceRepository";
+import { RedisRepository } from "../repositories/RedisRepository";
 import { Price, ProviderResponse } from "../types";
 
 export class PriceManager {
   private priceRepository: PriceRepository;
+  private redisRepository: RedisRepository;
   private readonly PAIRS_TO_CURRENCY_IDS: Record<string, string[]> = {
     "ton-usdt": ["the-open-network", "tether"]
   };
   private readonly MAX_PRICE_AGE_MINUTES = 1;
 
-  constructor(priceRepository: PriceRepository) {
+  constructor(priceRepository: PriceRepository, redisRepository: RedisRepository) {
     this.priceRepository = priceRepository;
+    this.redisRepository = redisRepository;
   }
 
   private isPriceStale(lastUpdate: Date): boolean {
@@ -51,13 +54,22 @@ export class PriceManager {
       throw new Error(`Pair ${pair} not found`);
     }
 
-    const lastPrice = await this.priceRepository.getLastPrice(pair);
-    
-    if (lastPrice && !this.isPriceStale(lastPrice.timestamp)) {
-      console.log('Using cached price from', lastPrice.timestamp.toISOString());
+    const redisPrice = await this.redisRepository.getPrice(pair);
+    if (redisPrice && !this.isPriceStale(redisPrice.timestamp)) {
+      console.log('Using Redis cached price from', redisPrice.timestamp.toISOString());
       return {
-        price: lastPrice.price,
-        reversePrice: 1 / lastPrice.price
+        price: redisPrice.price,
+        reversePrice: 1 / redisPrice.price
+      };
+    }
+
+    const dbPrice = await this.priceRepository.getLastPrice(pair);
+    if (dbPrice && !this.isPriceStale(dbPrice.timestamp)) {
+      console.log('Using DB cached price from', dbPrice.timestamp.toISOString());
+      await this.redisRepository.setPrice(pair, dbPrice);
+      return {
+        price: dbPrice.price,
+        reversePrice: 1 / dbPrice.price
       };
     }
 
@@ -67,7 +79,16 @@ export class PriceManager {
     const toPrice = price.price[currencies[1]].usd;
     const pairPrice = fromPrice / toPrice;
 
-    await this.priceRepository.savePrice(pair, pairPrice, price.providerId);
+    const priceData = {
+      price: pairPrice,
+      timestamp: new Date(),
+      provider_id: price.providerId
+    };
+
+    await Promise.all([
+      this.priceRepository.savePrice(pair, pairPrice, price.providerId),
+      this.redisRepository.setPrice(pair, priceData)
+    ]);
     
     return {
       price: pairPrice,
