@@ -24,7 +24,7 @@ WhaleTA/
 
 2. Start the application using Docker Compose:
 ```bash
-docker-compose up
+docker compose -p exchange -f docker-compose.yml up
 ```
 3. Run frontend and backend 
 ### Frontend 
