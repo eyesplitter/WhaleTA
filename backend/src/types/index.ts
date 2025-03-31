@@ -12,3 +12,10 @@ export interface Provider {
   name: string
   base_url: string
 }
+
+
+export interface Config {
+  port: number
+  databaseUrl: string
+  redisUrl: string
+}

@@ -7,18 +7,23 @@ import { HistoricPriceRepository } from "./repositories/HistoricPriceRepository"
 import { PriceManager } from "./managers/PriceManager"
 import { PriceController } from "./controllers/PriceController"
 import cors from "cors"
+import { Config } from "./types"
 dotenv.config()
 
-const config: Record<string, string | number> = {
-  port: parseInt(process.env.SERVER_PORT) || 5005,
-  pgHost: process.env.MYSQL_HOST || "localhost",
-  pgPort: parseInt(process.env.MYSQL_PORT) || 5432,
-  pgUser: process.env.MYSQL_USER || "postgres",
-  pgPassword: process.env.MYSQL_PASSWORD || "cryptoexchangepass",
-  pgDatabase: process.env.MYSQL_DATABASE || "cryptoexchange",
-  redisHost: process.env.REDIS_HOST || "localhost",
-  redisPort: parseInt(process.env.REDIS_PORT) || 6379,
-  redisPassword: process.env.REDIS_PASSWORD || "cryptoexchangepass",
+const config: Config = {
+  port: parseInt(process.env.SERVER_PORT ?? "5005", 10),
+  databaseUrl: process.env.DATABASE_URL,
+  redisUrl: process.env.REDIS_URL,
+}
+
+if (!config.databaseUrl) {
+  console.error("DATABASE_URL is not set in the environment variables.")
+  process.exit(1)
+}
+
+if (!config.redisUrl) {
+  console.error("REDIS_URL is not set in the environment variables.")
+  process.exit(1)
 }
 
 const app = express()
@@ -26,11 +31,9 @@ app.use(cors())
 app.use(express.json())
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: config.databaseUrl,
 })
-
-const redisUrl = `redis://${config.redisHost}:${config.redisPort}${config.redisPassword ? `?password=${config.redisPassword}` : ""}`
-const redisRepository = new RedisRepository(redisUrl)
+const redisRepository = new RedisRepository(config.redisUrl)
 const priceRepository = new PriceRepository(pool)
 const historicPriceRepository = new HistoricPriceRepository(pool)
 const priceManager = new PriceManager(priceRepository, redisRepository, historicPriceRepository)
@@ -62,3 +65,13 @@ app.get("/health", (req, res) => priceController.healthCheck(req, res))
     await redisRepository.disconnect()
     process.exit(1)
   })
+
+const shutdown = async () => {
+  console.info("Shutting down server...")
+  await redisRepository.disconnect()
+  await pool.end()
+  process.exit(0)
+}
+
+process.on("SIGINT", shutdown)
+process.on("SIGTERM", shutdown)
